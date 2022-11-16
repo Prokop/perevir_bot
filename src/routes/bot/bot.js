@@ -27,18 +27,10 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onReqTakeQuery,
     onMoreStatusesQuery,
     onConfirmClosePending,
-} = require('./query-callbacks');
-
-const {
-    onGetQuiz,
-    onQuizStartQuery,
-    onQuizСheckQuery,
-    onQuizNextQuery
-} = require('./quiz.js');
+} = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
 
@@ -110,8 +102,6 @@ bot.on('message', async (msg) => {
         await onSubscription(msg, bot)
     } else if (isTextFromDict(text, ChangeLanguage) || text === '/change_language') {
         await onChangeLanguage(msg, bot)
-    } else if (isTextFromDict(text, ChangeLanguage) || text === '/quiz') {
-        await onGetQuiz(msg, bot)
     } else if (text === '/setfakes') {
         await onSetFakesRequest(msg, bot);
     } else if (text && text.startsWith('/setblacksource')) { 
@@ -177,14 +167,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onUpdateCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('CHAT_')) {
         await onChatModeQuery(callbackQuery, bot)
-    } else if (data.startsWith('TAKEREQ_')) {
+    }  else if (data.startsWith('TAKEREQ_')) {
         await onReqTakeQuery(callbackQuery, bot)
-    } else if (data.startsWith('QUIZ_START')) {
-        await onQuizStartQuery(callbackQuery, bot)
-    } else if (data.startsWith('QUIZ_CHECK')) {
-        await onQuizСheckQuery(callbackQuery, bot)
-    } else if (data.startsWith('QUIZ_NEXT')) {
-        await onQuizNextQuery(callbackQuery, bot)
     } else if (data.startsWith('UNPAUSE_')) {
         await unpauseCallback(callbackQuery, bot)
     } else if (data.startsWith('MORESTATUSES_')) {
