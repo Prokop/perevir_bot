@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { URL } = require('url');
 const { getText, getLanguageTGChat} = require('./localisation');
 const {RequestThrottleLimit} = require("./contstants");
 const Request = mongoose.model('Request');
@@ -426,6 +427,16 @@ function updateTextsList(oldList, newList) {
   return result;
 }
 
+function removeQueryParamsFromLink(link) {
+  try {
+    const url = new URL(link);
+    url.search = '';
+    return url.href;
+  } catch (error) {
+    // If the input is not a valid URL, return the input as it is.
+    return link;
+  }
+}
 
 module.exports = {
     getSubscriptionBtn,
@@ -449,6 +460,7 @@ module.exports = {
     getFakeText,
     checkUserThrottling,
     updateTextsList,
+    removeQueryParamsFromLink,
 }
 
 async function notifyViber(text, viberRequester) {

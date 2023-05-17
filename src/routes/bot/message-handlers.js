@@ -35,6 +35,7 @@ const {
     updateSource,
     getUserName,
     checkUserThrottling,
+    removeQueryParamsFromLink,
 } = require("./utils");
 
 const {
@@ -391,7 +392,8 @@ const onCheckRequest = async (msg, bot) => {
 
     if (msg.text) { //Get text data
         const labeledSource = await getLabeledSource(msg.text);
-        const foundText = await Request.findOne({text: msg.text}, '_id fakeStatus commentChatId commentMsgId');
+        const requestText = removeQueryParamsFromLink(msg.text);
+        const foundText = await Request.findOne({text: requestText}, '_id fakeStatus commentChatId commentMsgId');
         if (foundText) {
             if (foundText.fakeStatus === 0) return addToWaitlist(msg, foundText, bot);
             return reportStatus(msg, foundText, bot, labeledSource);
@@ -412,7 +414,7 @@ const onCheckRequest = async (msg, bot) => {
             } catch (e) {safeErrorLog(e)}
         } 
 
-        request.text = msg.text;
+        request.text = requestText;
     } else if (msg.caption) {
         request.text = msg.caption;
     }
