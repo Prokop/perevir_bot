@@ -66,7 +66,7 @@ function onMessage(message, response) {
 
     const viberId = response.userProfile.id;
 
-    User.findOne({ 'viberId': viberId }, function (err, user) {
+    User.findOne({ 'viberId': viberId }, async function (err, user) {
         if (user == null || user == undefined) {
             const text = message.text;
             var campaign;
@@ -80,10 +80,12 @@ function onMessage(message, response) {
                 joinedCampaign: campaign,
                 createdAt: new Date()
             });
-            newUser.save()
-                .then(function () {
-                    handleMsg(message, response);
-                });
+            try {
+                await newUser.save();
+            } catch (error) {
+                console.error(error);
+            }
+            handleMsg(message, response);
         } else {
             handleMsg(message, response);
         }
@@ -160,6 +162,11 @@ async function onNewRequest (message, response) {
             parse_mode: "HTML"
         };
         const sentMsg = await messageId(moderatorsChanel, msgText, false, options);
+        if (sentMsg == null) {
+            return bot.sendMessage(response.userProfile, [
+                new TextMessage('На жаль, ми не можемо обробити цей запит зараз. Спробуйте ще раз, за декілька хвилин.')
+            ]);
+        }
         
         const inline_keyboard = await statusesKeyboard(requestId, true);
         const optionsMod = {
