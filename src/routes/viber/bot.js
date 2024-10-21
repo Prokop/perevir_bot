@@ -67,6 +67,8 @@ function onMessage(message, response) {
     const viberId = response.userProfile.id;
 
     User.findOne({ 'viberId': viberId }, async function (err, user) {
+        if (user.status === 'blocked') return;
+
         if (user == null || user == undefined) {
             const text = message.text;
             var campaign;
