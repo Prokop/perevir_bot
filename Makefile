@@ -23,14 +23,14 @@ db-shell:
 	docker compose -f docker-compose.yml exec mongo mongo
 push_image_prod:
 	@echo "Building new PROD image..."
-	aws ecr get-login-password --region eu-central-1 --profile perevir | docker login --username AWS --password-stdin 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot
+	aws ecr get-login-password | docker login --username AWS --password-stdin 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot
 	docker build -t perevir_bot .
 	docker tag perevir_bot:latest 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot:latest
 	@echo "Pushing new PROD image to ECR..."
 	docker push 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot:latest
 push_image_stage:
 	@echo "Building new STAGING image..."
-	aws ecr get-login-password --region eu-central-1 --profile perevir | docker login --username AWS --password-stdin 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot
+	aws ecr get-login-password | docker login --username AWS --password-stdin 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot
 	docker build -t perevir_bot .
 	docker tag perevir_bot:latest 547600246465.dkr.ecr.eu-central-1.amazonaws.com/perevir_bot:staging
 	@echo "Pushing new PROD image to ECR..."
@@ -40,14 +40,10 @@ deploy_prod: push_image_prod
 	@read CONFIRM && [ "$$CONFIRM" = "yes" ] || (echo "Aborted!" && exit 1)
 	@echo "Deploying..."
 	aws ecs describe-task-definition \
-		--region eu-central-1 \
-		--profile perevir \
 		--task-definition perevir-bot-prod-fargate \
 		| jq -r ".taskDefinition | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)" > task-def.json
 	REVISION=$(aws ecs register-task-definition \
 		--cli-input-json file://task-def.json \
-		--region eu-central-1 \
-		--profile perevir \
 		| jq -r ".revision")
 	aws ecs update-service \
 	  --cluster perevir-bot-prod-fargate-cluster \
