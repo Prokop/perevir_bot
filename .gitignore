@@ -6,3 +6,4 @@ package-lock.json
 /mongo-volume
 /src/public/images/*
 !/src/public/images/.gitkeep 
+task-def.json
