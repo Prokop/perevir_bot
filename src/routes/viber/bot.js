@@ -13,9 +13,11 @@ const request = require('request');
 const http = require('http');
 
 const mongoose = require('mongoose');
-const {checkUserThrottling, safeErrorLog} = require("../bot/utils");
+const {checkUserThrottling, safeErrorLog, getFakeText} = require("../bot/utils");
+const { getGPTanswer } = require('../chatGPT/gpt2');
 const User = mongoose.model('ViberUser');
 const Request = mongoose.model('Request');
+const AICheck = mongoose.model('AICheck');
 
 //VIBER BOT
 if (!process.env.VIBER_PUBLIC_ACCOUNT_ACCESS_TOKEN_KEY) {
@@ -85,19 +87,19 @@ function onMessage(message, response) {
             } catch (error) {
                 console.error(error);
             }
-            handleMsg(message, response);
+            handleMsg(message, response, newUser);
         } else {
-            handleMsg(message, response);
+            handleMsg(message, response, user);
         }
     });
 }
 
-function handleMsg(message, response) {
+function handleMsg(message, response, user) {
     const text = message.text;
     if (text && text.startsWith('checkContent')) {
         onCheckContent(response);
     } else {
-        onNewRequest(message, response);
+        onNewRequest(message, response, user);
     }
 }
 
@@ -131,16 +133,27 @@ function onCheckContent(response) {
     ]);
 }
 
-async function onNewRequest (message, response) {
+async function onNewRequestOLD (message, response, user) {
     const url = message.url;
     const text = message.text;
     const requester = response.userProfile.id;
+    
+    // Check if user is throttled
     if (await checkUserThrottling(requester, true)) {
         bot.sendMessage(response.userProfile, [
             new TextMessage('Ви перевищили ліміт запитів. Відпочиньте і спробуйте пізніше.')
         ]);
         return;
     }
+
+    // Check user balance
+    if(user.requestsBalance <= 0) {
+        bot.sendMessage(response.userProfile, [ 
+            new TextMessage('Ви використали всі запити цього тижня. Спробуйте наступного тижня.')
+        ]);
+        return;
+    }
+
     if (text || url) {
         const requestId = new mongoose.Types.ObjectId();
         const reqsCount = await Request.countDocuments({});
@@ -156,6 +169,188 @@ async function onNewRequest (message, response) {
         var msgText = '';
         if(text) msgText += text + '\n\n';
         if(url) msgText += "<a href='" + url + "'>Медіа</a>";
+        //Send to moderation
+        const moderatorsChanel = process.env.TGMAINCHAT;
+        const options = {
+            parse_mode: "HTML"
+        };
+        const sentMsg = await messageId(moderatorsChanel, msgText, false, options);
+        if (sentMsg == null) {
+            return bot.sendMessage(response.userProfile, [
+                new TextMessage('На жаль, ми не можемо обробити цей запит зараз. Спробуйте ще раз, за декілька хвилин.')
+            ]);
+        }
+        
+        const inline_keyboard = await statusesKeyboard(requestId, true);
+        const optionsMod = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending | #viber', false, optionsMod);
+        request.moderatorMsgID = sentMsg.message_id;
+        request.moderatorActionMsgID = sentActionMsg.message_id;
+        request.save();
+        //Inform user
+        bot.sendMessage(response.userProfile, [
+            new TextMessage('Поки що ми не знайшли достатньої кількості доказів щодо цієї інформації. Ми нічого не знайшли або не бачили такої інформації у нашій базі перевірених новин.\nФактчекери почали опрацьовувати цей запит, це може зайняти до доби.\n\n📝Переходь до Telegram-боту Перевірки та проходь освітні тести для того, щоб навчитися самостійно боротися з фейками: https://t.me/perevir_bot?start=quiz')
+        ]);
+
+        //Update user balance
+        user.requestsBalance -= 1;
+        user.save();
+
+    } else {
+        bot.sendMessage(response.userProfile, [
+            new TextMessage('На жаль, ми не можемо обробити цей запит')
+        ]);
+    }
+}
+
+async function onNewRequest (message, response, user) {
+    const url = message.url;
+    const text = message.text;
+    const requester = response.userProfile.id;
+    
+    // Check if user is throttled
+    if (await checkUserThrottling(requester, true)) {
+        bot.sendMessage(response.userProfile, [
+            new TextMessage('Ви перевищили ліміт запитів. Відпочиньте і спробуйте пізніше.')
+        ]);
+        return;
+    }
+
+    if (text) {
+        if (text.length < 10) {
+            bot.sendMessage(response.userProfile, [
+                new TextMessage('Ваше повідомлення занадто коротке. Будь ласка, надішліть більше інформації.')
+            ]);
+            return;
+        } else {
+            bot.sendMessage(response.userProfile, [
+                new TextMessage('Ваше звернення прийнято. Ми почали його перевірку. Очікуйте відповідь.')
+            ]);
+        }
+
+        const GPTAnswer = await getGPTanswer(text, 'uk');
+        console.log(GPTAnswer);
+        const result = GPTAnswer.result;
+        const search = GPTAnswer.search;
+
+        const normalizedJson = result.substring(result.indexOf('{'), result.lastIndexOf('}') + 1);
+        const JsonAnswer = JSON.parse(normalizedJson);
+
+        var statusCode, responseText;
+
+        if (JsonAnswer.result == 'error') {
+            bot.sendMessage(response.userProfile, [
+                new TextMessage(JsonAnswer.comment)
+            ]);
+        } else if (JsonAnswer.result == 'reject') {
+            responseText = JsonAnswer.comment;
+            bot.sendMessage(response.userProfile, [
+                new TextMessage(responseText + '\n\nℹ️ Звернення перевірено Штучним Інтелектом та може містити неточності. Рекомендуємо самостійно перевірити інформацію або надіслати звернення до наших фактчекерів.')
+            ]);
+            statusCode = '-2';
+        } else {
+            const status = JsonAnswer.result.toLowerCase();
+            var statusText = 'Ваше звернення визначено як ';
+            if (status == 'true') {
+                statusText += 'правдиве.';
+                statusCode = '1';
+            } else if (status == 'fake') {
+                statusText += 'брехня.';
+                statusCode = '-1';
+            } else if (status == 'noproof') {
+                statusText += 'те, що немає доказів.';
+                statusCode = '-4';
+            } else if (status == 'manipulation') {
+                statusText += 'напівправда.';
+                statusCode = '-5';
+            } else {
+                return console.log("Unknown status: " + status);
+            }
+
+            responseText = statusText + '\n\nКоментар: ' + JsonAnswer.comment;
+            if (JsonAnswer.sources && JsonAnswer.sources.length > 0) {
+                responseText += '\n\nДжерела:';
+                JsonAnswer.sources.forEach(source => {
+                    responseText += '\n-' + source;
+                });
+            }
+
+            bot.sendMessage(response.userProfile, [
+                new TextMessage(responseText+ '\n\nℹ️ Звернення перевірено Штучним Інтелектом та може містити неточності. Рекомендуємо самостійно перевірити інформацію або надіслати звернення до наших фактчекерів.')
+            ]);
+        }
+        
+        const requestId = new mongoose.Types.ObjectId();
+        const reqsCount = await Request.countDocuments({});
+        var request = new Request({
+            _id: requestId,
+            viberReq: true, 
+            viberRequester: requester, 
+            requestId: reqsCount + 1,
+            createdAt: new Date(),
+            lastUpdate: new Date(),
+            fakeStatus: parseInt(statusCode)
+        });
+        var msgText = '';
+        if(text) msgText += text + '\n\n';
+        if(url) msgText += "<a href='" + url + "'>Медіа</a>";
+        //Send to moderation
+        const moderatorsChanel = process.env.TGMAINCHAT;
+        const options = {
+            parse_mode: "HTML"
+        };
+        const sentMsg = await messageId(moderatorsChanel, msgText, false, options);
+        if (sentMsg == null) {
+            return bot.sendMessage(response.userProfile, [
+                new TextMessage('На жаль, ми не можемо обробити цей запит зараз. Спробуйте ще раз, за декілька хвилин.')
+            ]);
+        }
+        
+        var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+        const optionsMod = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        const fakeText = getFakeText(statusCode);
+        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#resolved | #viber | ' + fakeText + '\nМодератор: #AI\n\nКоментар:\n' + JsonAnswer.comment, false, optionsMod);
+        request.moderatorMsgID = sentMsg.message_id;
+        request.moderatorActionMsgID = sentActionMsg.message_id;
+        request.save();
+
+        //Save AICheck for moderation and fine tuning
+        const aiCheck = new AICheck({
+            _id: new mongoose.Types.ObjectId(),
+            request: requestId,
+            fakeStatus: parseInt(statusCode),
+            text: msgText,
+            search: search,
+            comment: responseText,
+            createdAt: new Date()
+        });
+        aiCheck.save();
+
+
+    } else if (url) {
+        const requestId = new mongoose.Types.ObjectId();
+        const reqsCount = await Request.countDocuments({});
+        var request = new Request({
+            _id: requestId,
+            viberReq: true, 
+            viberRequester: requester, 
+            viberMediaUrl: url,
+            requestId: reqsCount + 1,
+            createdAt: new Date(),
+            lastUpdate: new Date()
+        });
+        var msgText = "<a href='" + url + "'>Медіа</a>";
         //Send to moderation
         const moderatorsChanel = process.env.TGMAINCHAT;
         const options = {

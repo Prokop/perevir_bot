@@ -5,4 +5,5 @@ package-lock.json
 .DS_Store
 /mongo-volume
 /src/public/images/*
-!/src/public/images/.gitkeep 
+!/src/public/images/.gitkeep
+fine-tuning-v1.jsonl 

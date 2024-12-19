@@ -11,6 +11,7 @@ var routes = require('./routes/index');
 require('./routes/bot/stats');
 require('./routes/chatGPT/gpt');
 var textsAPIRouter = require("./routes/dashboard/textsAPI");
+var AIchecksAPIRouter = require("./routes/dashboard/AIchecksAPI");
 var newsletterAPIRouter = require("./routes/dashboard/newsletterAPI");
 var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
 var sourcestatsAPIRouter = require("./routes/dashboard/sourcestatsAPI");
@@ -36,6 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use("/newsletterAPI", newsletterAPIRouter);
+app.use("/AIchecksAPI", AIchecksAPIRouter);
 app.use("/leaderboardAPI", leaderboardAPIRouter);
 app.use("/sourcestatsAPI", sourcestatsAPIRouter);
 app.use("/textsAPI", textsAPIRouter);

@@ -5,7 +5,7 @@ head
   link(rel='apple-touch-icon' sizes='76x76' href='../assets/img/apple-icon.png')
   link(rel='icon' type='image/png' href='../assets/img/favicon.png')
   title
-    | Розсилка
+    | AI перевірки
   // Fonts and icons
   link(href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet')
   // Nucleo Icons
@@ -39,7 +39,7 @@ aside#sidenav-main.sidenav.navbar.navbar-vertical.navbar-expand-xs.border-0.bord
                       path.color-background(d='M39.198,22.4912623 C37.3776246,22.4928106 35.5817531,22.0149171 33.951625,21.0951667 L33.92225,21.1107282 C31.1430221,22.6838032 27.9255001,22.9318916 24.9844167,21.7998837 C24.4750389,21.605469 23.9777983,21.3722567 23.4960833,21.1018359 L23.4745417,21.1129513 C20.6961809,22.6871153 17.4786145,22.9344611 14.5386667,21.7998837 C14.029926,21.6054643 13.533337,21.3722507 13.0522917,21.1018359 C11.4250962,22.0190609 9.63246555,22.4947009 7.81570833,22.4912623 C7.16510551,22.4842162 6.51607673,22.4173045 5.875,22.2911849 L5.875,44.7220845 C5.875,45.9498589 6.7517757,46.9451667 7.83333333,46.9451667 L19.5833333,46.9451667 L19.5833333,33.6066734 L27.4166667,33.6066734 L27.4166667,46.9451667 L39.1666667,46.9451667 C40.2482243,46.9451667 41.125,45.9498589 41.125,44.7220845 L41.125,22.2822926 C40.4887822,22.4116582 39.8442868,22.4815492 39.198,22.4912623 Z')
           span.nav-link-text.ms-1 &Dcy;&acy;&shcy;&bcy;&ocy;&rcy;&dcy;
       li.nav-item
-        a.nav-link(href='../ai-checks')
+        a.nav-link.active(href='../ai-checks')
           .icon.icon-shape.icon-sm.shadow.border-radius-md.bg-white.text-center.me-2.d-flex.align-items-center.justify-content-center
             svg(width='12px' height='12px' viewbox='0 0 45 40' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink')
               g(stroke='none' stroke-width='1' fill='none' fill-rule='evenodd')
@@ -65,7 +65,7 @@ aside#sidenav-main.sidenav.navbar.navbar-vertical.navbar-expand-xs.border-0.bord
                       path.color-background.opacity-6(d='M36.0983333,22.7383333 C36.9280725,27.5056357 35.3832611,32.3782594 31.9583333,35.7966667 C31.0587397,36.6879974 30.0508686,37.4629382 28.9583333,38.1033333 C28.3033941,38.4890431 27.4704606,38.3827841 26.9333333,37.845 L23.6166667,34.53 C28.5053053,31.4496338 32.7452344,27.4440926 36.0983333,22.7383333 L36.0983333,22.7383333 Z')
           span.nav-link-text.ms-1 Лідерборд
       li.nav-item
-        a.nav-link.active(href='../newsletter')
+        a.nav-link(href='../newsletter')
           .icon.icon-shape.icon-sm.shadow.border-radius-md.bg-white.text-center.me-2.d-flex.align-items-center.justify-content-center
             svg(width='12px' height='12px' viewbox='0 0 40 44' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink')
               title document
@@ -162,32 +162,32 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
   .row
     .col-12
       .card.mb-4
-        .card-header.pb-0
-          h6 Розсилка
-          input#from(type='date' class='date' min='2022-02-24')
-          input#to(type='date' class='date' min='2022-02-24')
-          input#checkedMinNews(type='number' class='date' min='0' placeholder="Запитів від...")
-          input#checkedMaxNews(type='number' class='date' min='0' placeholder="Запитів до...")
-          li.list-group-item.border-0.px-0
-            .form-check.form-switch.ps-0
-              input#subscribed.form-check-input.ms-auto(type='checkbox' checked='')
-              label.form-check-label.text-body.ms-3.text-truncate.w-80.mb-0(for='subscribed') Лише підписаним на розсилку
-          button(type='button' class='btn bg-gradient-dark mb-0' onclick="getNewsletter()") Розрахувати користувачів
-          br
-          br
-          h6 Користувачів:
-          h4#users 
-          br
-          textarea#message(type='text' class='messageTxt' placeholder="Текст повідомлення..." rows="4" cols="78" onkeyup="checkForm()")
-          br
-          button#sendBtn(type='button' class='btn bg-gradient-dark mb-0' style="display:none" onclick="runNewsletter()") Запустити розсилку
-          br
-          br
+        .card-header.pb-0.p-3
+          .row
+            .col-6.d-flex.align-items-center
+              h6.mb-0 АІ перевірки
+        
+        .card-body.px-0.pt-0.pb-2
+          .table-responsive.p-0
+            table.table.align-items-center.mb-0
+              thead
+                tr
+                  th.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Запит
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Вердикт
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Створений
+                  th.text-secondary.opacity-7
+              tbody#ai-checks
+        // Pagination
+        .row
+          .col-12.d-flex.justify-content-center
+            nav
+              ul.pagination#pagination
+                        
 
+                  
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')
-script(src='../assets/js/plugins/chartjs.min.js')
+script(src='../assets/js/soft-ui-dashboard.min.js')
 script(src='../assets/js/main.js')
 script.
-  document.getElementById('from').max = new Date().toISOString().split("T")[0];
-  document.getElementById('to').max = new Date().toISOString().split("T")[0];
+  getAIchecks(1);

@@ -205,6 +205,8 @@ adminSchema.methods.toAuthJSON = function () {
 var viberUserSchema = Schema({
     _id: Schema.Types.ObjectId,
     viberId: {type: String, unique: true}, 
+    requestsBalance: {type: Number, default: 1},
+    extraBalance: {type: Number, default: 0},
     joinedCampaign: String, //Name of Campaign from where pressed button
     createdAt: {type: Date, default: new Date()}
 });
@@ -308,6 +310,21 @@ var parsingPostSchema = Schema({
     parsedAt: {type: Date, default: new Date()}
 });
 
+var AICheckSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    request: { type: Schema.Types.ObjectId, ref: 'Request' },
+    fakeStatus: {type: Number, default: 0}, 
+    text: String, //Request text
+    search: [{
+        searchTerm: String, //Search term
+        searchResult: String, //Search results
+    }],
+    comment: String, //Comment from AI
+    betterFakeStatus: Number,
+    betterComment: String, //Comment from fact checker for fine tuning
+    createdAt: {type: Date, default: new Date()}
+});
+
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('WhatsappUser', whatsappUserSchema);
 mongoose.model('MessengerUser', messengerUserSchema);
@@ -331,3 +348,4 @@ mongoose.model('Answer', answerSchema);
 mongoose.model('PassingQuiz', passingQuizSchema);
 mongoose.model('ParsingSource', parsingSourceSchema);
 mongoose.model('ParsingPost', parsingPostSchema);
+mongoose.model('AICheck', AICheckSchema);

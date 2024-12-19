@@ -31,6 +31,7 @@ const PassingQuiz = mongoose.model('PassingQuiz');
 const SourceTelegram = mongoose.model('SourceTelegram');
 const SourceDomain = mongoose.model('SourceDomain');
 const ParsingSource = mongoose.model('ParsingSource');
+const AICheck = mongoose.model('AICheck');
 
 require('./bot/bot');
 require('./parser-bot/parser');
@@ -222,6 +223,36 @@ async function getCampaigns() {
 
     return joined;
 }
+
+router.get('/ai-checks', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            return res.render('ai-checks'); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+
+router.get('/ai-checks/:checkId', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const {checkId} = req.params;
+            const check = await AICheck.findOne({_id: checkId}).populate('request', 'requestId');
+            if(!check) return res.send('This quiz does not exist');
+            return res.render('ai-check', {data: check}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
 
 router.get('/leaderboard', auth.optional, async (req, res) => {
     if (req.auth && req.auth.id) {

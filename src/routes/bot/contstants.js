@@ -30,7 +30,7 @@ const UnsupportedContentText = {
 
 const SetFakesRequestText = "Надішліть нові фейки у відповідь на це повідомлення"
 const RequestTimeout = 14 // in days
-const RequestThrottleLimit = 5 // 5 requests per 1 hour
+const RequestThrottleLimit = 50 // 5 requests per 1 hour
 const FakeStatusesStrToInt = {
     "true": 1,
     "false": -1,

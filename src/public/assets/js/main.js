@@ -442,3 +442,71 @@ function addMonitoring() {
       return window.location.href = "../monitoring";
     });
 }
+
+//AI checks
+function getAIchecks(page) {
+
+  fetch("../AIchecksAPI/get?" + new URLSearchParams({
+    page: page
+  }))
+  .then(response => response.json())
+  .then(res => {
+    const pages = res.pages;
+    const checks = res.checks;
+
+    document.getElementById('ai-checks').innerHTML = '';
+    for (var i in checks) {
+      var fakeStatus;
+      if(checks[i].fakeStatus == '1') fakeStatus = 'Правда';
+      else if(checks[i].fakeStatus == '-1') fakeStatus = 'Фейк';
+      else if(checks[i].fakeStatus == '-2') fakeStatus = 'Відхилено';
+      else if(checks[i].fakeStatus == '-4') fakeStatus = 'Немає доказів';
+      else if(checks[i].fakeStatus == '-5') fakeStatus = 'Маніпуляція';
+      else fakeStatus = 'Невідомо';
+
+      const createdAt = new Date(checks[i].createdAt).toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' });
+
+      document.getElementById('ai-checks').innerHTML += '<tr> <td class="left-pad"> <a href="/ai-checks/' + checks[i]._id + '"> <h6 class="mb-0 text-sm wrap">' + checks[i].text + '</h6></a> <p class="text-xs text-secondary mb-0">id: '+ checks[i].request?.requestId +'</p> </td> <td class="text-center"> <span class="font-weight-bold">'+ fakeStatus +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ createdAt +'</span> </td></tr>'; 
+    }
+
+    //pagination
+    var pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    if (page > 3) {
+      pagination.innerHTML += '<li class="page-item"> <a class="page-link" href="javascript:void(0);" onclick="getAIchecks(1)">1</a> </li>';
+      pagination.innerHTML += '<li class="page-item"> <a class="page-link" href="javascript:void(0);">...</a> </li>';
+    }
+    for (var i = page - 2; i <= page + 2; i++) {
+      if (i > 0 && i <= pages) {
+        if (i == page) {
+          pagination.innerHTML += '<li class="page-item active"> <a class="page-link" href="javascript:void(0);">' + i + '</a> </li>';
+        } else {
+          pagination.innerHTML += '<li class="page-item"> <a class="page-link" href="javascript:void(0);" onclick="getAIchecks(' + i + ')">' + i + '</a> </li>';
+        }
+      }
+    }
+    if (page < pages - 2) {
+      pagination.innerHTML += '<li class="page-item"> <a class="page-link" href="javascript:void(0);">...</a> </li>';
+      pagination.innerHTML += '<li class="page-item"> <a class="page-link" href="javascript:void(0);" onclick="getAIchecks(' + pages + ')">' + pages + '</a> </li>';
+    }
+
+  })
+  .catch((error) => {
+    document.getElementById('ai-checks').innerHTML = '<tr><td class="text-center"> <span class="font-weight-bold">Немає даних</span> </td> </tr>';
+  });
+    
+}
+
+//Update AI check
+function updateAICheck(id) {
+  const betterComment = document.getElementById('betterComment').value;
+  const betterFakeStatus = document.getElementById('betterFakeStatus').value;
+  
+  fetch("../AIchecksAPI/update", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({id: id, betterComment: betterComment, betterFakeStatus: betterFakeStatus})
+    }).then(res => {
+      return window.location.href = "../ai-checks";
+    });
+}
