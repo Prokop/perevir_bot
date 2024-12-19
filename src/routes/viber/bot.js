@@ -71,7 +71,6 @@ function onMessage(message, response) {
     User.findOne({ 'viberId': viberId }, async function (err, user) {
 
         if (user == null || user == undefined) {
-            if (user.status === 'blocked') return;
             const text = message.text;
             var campaign;
             if (text && text.startsWith('checkContent_c_')) {
@@ -91,6 +90,7 @@ function onMessage(message, response) {
             }
             handleMsg(message, response, newUser);
         } else {
+            if (user.status === 'blocked') return;
             handleMsg(message, response, user);
         }
     });
