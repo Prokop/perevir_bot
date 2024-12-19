@@ -76,7 +76,7 @@ const {checkUserStatus, incrementBlockedMessagesCount} = require("./authorizatio
 
 //Notify about reloading
 try {
-    bot.sendMessage(admins[0], 'Bot reloaded');
+    bot.sendMessage(admins[0], 'Bot reloaded v2.01');
 } catch (e) {
     safeErrorLog(e);
 }
