@@ -65,3 +65,7 @@
 .bottomimg {
     max-width: 300px!important;
 }
+
+.wrap {
+    white-space: normal;
+}
