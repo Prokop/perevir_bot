@@ -12,8 +12,19 @@ async function incrementBlockedMessagesCount(userId) {
 }
 
 async function blockRequestInitiator(request) {
-    if (!request.requesterTG) return
-    await TelegramUser.findOneAndUpdate({telegramID: request.requesterTG}, {status: 'blocked'});
+    if (request.requesterTG) {
+        await TelegramUser.findOneAndUpdate({telegramID: request.requesterTG}, {status: 'blocked'});
+    }
+    if (request.viberRequester) {
+        await ViberUser.findOneAndUpdate({viberId: request.viberRequester}, {status: 'blocked'});
+    }
+    if (request.whatsappRequester) {
+        await WhatsappUser.findOneAndUpdate({whatsappId: request.whatsappRequester}, {status: 'blocked'});
+    }
+    if (request.messengerRequester) {
+        await MessengerUser.findOneAndUpdate({messengerId: request.messengerRequester}, {status: 'blocked'});
+    }
+
 }
 module.exports = {
     checkUserStatus,

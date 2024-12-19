@@ -8,13 +8,14 @@ const { prepareText, getDomainWithoutSubdomain } = require('../bot/utils');
 const openai = new OpenAI();
 const google = require('google-it')
 const { parser } = require('html-metadata-parser');
+const chatGPTmodel = process.env.CHATGPT_MODEL || "gpt-3.5"
 
 const askGPT = async (text) => {
     return new Promise(async (resolve, reject) => {
 
         try {
             const response = await openai.chat.completions.create({
-                model: "gpt-4",
+                model: chatGPTmodel,
                 messages: [{"role": "user", "content": text}],
                 max_tokens: 1000,
                 temperature: 0

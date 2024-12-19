@@ -208,19 +208,25 @@ var viberUserSchema = Schema({
     requestsBalance: {type: Number, default: 1},
     extraBalance: {type: Number, default: 0},
     joinedCampaign: String, //Name of Campaign from where pressed button
-    createdAt: {type: Date, default: new Date()}
+    createdAt: {type: Date, default: new Date()},
+    status: String,
+    blockedMessages: {type: Number, default: 0}
 });
 
 var whatsappUserSchema = Schema({
     _id: Schema.Types.ObjectId,
     whatsappId: {type: String, unique: true}, 
-    createdAt: {type: Date, default: new Date()}
+    createdAt: {type: Date, default: new Date()},
+    status: String,
+    blockedMessages: {type: Number, default: 0}
 });
 
 var messengerUserSchema = Schema({
     _id: Schema.Types.ObjectId,
     messengerId: {type: String, unique: true}, 
-    createdAt: {type: Date, default: new Date()}
+    createdAt: {type: Date, default: new Date()},
+    status: String,
+    blockedMessages: {type: Number, default: 0}
 });
 
 var sourceStatisticsSchema = Schema({
