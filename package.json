@@ -10,14 +10,11 @@
     "name": ""
   },
   "dependencies": {
-    "@binance/connector": "^1.7.0",
     "axios": "^1.6.7",
-    "bcryptjs": "^2.4.3",
     "body-parser": "^1.15.0",
     "cheerio": "^1.0.0-rc.12",
     "cookie-parser": "^1.4.0",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "debug": "^2.2.0",
     "dotenv": "^10.0.0",
     "express": "^4.14.0",
@@ -39,7 +36,6 @@
     "passport-local": "^1.0.0",
     "path": "^0.12.7",
     "pug": "^3.0.2",
-    "puppeteer": "^21.10.0",
     "request": "^2.88.2",
     "serve-favicon": "^2.3.0",
     "twilio": "^4.11.2",
